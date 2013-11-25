@@ -27,14 +27,20 @@
 <body>
 <div id="body">
     <div id="footer">
-        d3.layout.tree
-        <div class="hint">click or option-click to expand or collapse</div>
+        d3.layout.tree <div class="hint">click or option-click to expand or collapse</div>
     </div>
 </div>
 <script type="text/javascript">
 
-    d3.json("flare.json", function(json) {
+    var rootElement = d3.select("#body");
+    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 120});
+    var showTreeButton = rootElement.append("button").text("Show tree").on("click", function() {
+        var json = JSON.parse(inputText[0][0].value);
+        console.log(json);
         showTree(json);
+
+        inputText.remove();
+        showTreeButton.remove();
     });
 
     function showTree(json) {
