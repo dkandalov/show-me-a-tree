@@ -3,8 +3,9 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
     <link type="text/css" rel="stylesheet" href="style.css"/>
-    <script type="text/javascript" src="d3/d3.js"></script>
-    <script type="text/javascript" src="d3/d3.layout.js"></script>
+    <script type="text/javascript" src="js/peg-0.7.0.min.js"></script>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <script type="text/javascript" src="js/d3.layout.js"></script>
     <style type="text/css">
         .node circle {
             cursor: pointer;
@@ -33,15 +34,33 @@
 <script type="text/javascript">
 
     var rootElement = d3.select("#body");
-    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 120});
+    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 80});
+    rootElement.append("label").html("Use parser");
+    var useParseCheckBox = rootElement.append("input").attr("type", "checkbox");
     var showTreeButton = rootElement.append("button").text("Show tree").on("click", function() {
-        var json = JSON.parse(inputText[0][0].value);
+        console.log(grammarText[0][0].value);
+        var parser = PEG.buildParser(grammarText[0][0].value);
+        var json = parser.parse(inputText[0][0].value)
+//        var json = JSON.parse(inputText[0][0].value);
         console.log(json);
         showTree(json);
 
         inputText.remove();
         showTreeButton.remove();
     });
+    var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text('\
+start = node\n\
+\n\
+node = nodeLParen name:name children:nextNode* nodeRParen { return children.length > 0 ? {name: name, children: children} : {name: name}; }\n\
+nextNode = separator node:node { return node; }\n\
+\n\
+name = s:[0-9a-zA-Z]+ { return s.join(""); }\n\
+nodeLParen = "Node(" ws*\n\
+nodeRParen = ws* ")"\n\
+separator = ws* "," ws*\n\
+ws = " " / "\\t" / "\\n"\n\
+    ');
+
 
     function showTree(json) {
         var m = [20, 120, 20, 120],
