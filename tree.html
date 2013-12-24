@@ -34,12 +34,12 @@
 <script type="text/javascript">
     // TODO try psi from intellij
 
-    var defaults = createDefaults();
+    var config = createConfig();
     var display = showTree;
 
     var rootElement = d3.select("#body");
 
-    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(defaults.inputTree);
+    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(config.defaults.inputTree);
     var useParserLabel = rootElement.append("label").html("Use parser");
     var useParserCheckBox = rootElement.append("input").attr("type", "checkbox");
     var showTreeButton = rootElement.append("button").text("Show");
@@ -48,7 +48,7 @@
     var treeTypeDropDown = appendTreeTypeDropDownTo(rootElement, function(newDisplayFunction){
         display = newDisplayFunction;
     });
-    var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(defaults.grammar);
+    var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(config.defaults.grammar);
 
     var treeElement = rootElement.append("span");
 
@@ -59,7 +59,7 @@
 
         treeElement.selectAll("*").remove();
 
-        display(json, treeElement);
+        display(json, treeElement, config);
     });
     deleteAllButton.on("click", function() {
         [inputText, useParserLabel, useParserCheckBox, showTreeButton, deleteAllButton, grammarText, treeTypeDropDown].forEach(function(it){
@@ -82,10 +82,10 @@
         return treeTypeDropDown;
     }
 
-    function showTree(json, rootElement) {
+    function showTree(json, rootElement, config) {
         var m = [20, 120, 20, 120],
-            w = 1280 - m[1] - m[3],
-            h = 800 - m[0] - m[2],
+            w = config.width - m[1] - m[3],
+            h = config.height - m[0] - m[2],
             i = 0;
         var tree = d3.layout.tree()
                 .size([h, w]);
@@ -216,8 +216,8 @@
         }
     }
 
-    function showCircleTree(json, rootElement) {
-        var diameter = 960;
+    function showCircleTree(json, rootElement, config) {
+        var diameter = Math.min(config.width, config.height);
 
         var tree = d3.layout.tree()
                 .size([360, diameter / 2 - 120])
@@ -259,9 +259,9 @@
         d3.select(self.frameElement).style("height", diameter - 150 + "px");
     }
 
-    function showDendrogram(json, rootElement) {
-        var width = 960,
-            height = 1200;
+    function showDendrogram(json, rootElement, config) {
+        var width = config.width,
+            height = config.height;
 
         var cluster = d3.layout.cluster()
                 .size([height, width - 160]);
@@ -302,8 +302,8 @@
         d3.select(self.frameElement).style("height", height + "px");
     }
 
-    function showCircleDendrogram(json, rootElement) {
-        var radius = 960 / 2;
+    function showCircleDendrogram(json, rootElement, config) {
+        var radius = Math.min(config.width, config.height) / 2;
 
         var cluster = d3.layout.cluster()
             .size([360, radius - 120]);
@@ -342,6 +342,14 @@
                 .text(function(d) { return d.name; });
 
         d3.select(self.frameElement).style("height", radius * 2 + "px");
+    }
+
+    function createConfig() {
+        return {
+            width: 1200,
+            height: 800,
+            defaults: createDefaults()
+        }
     }
 
     function createDefaults() {
