@@ -32,37 +32,45 @@
     </div>
 </div>
 <script type="text/javascript">
+    // TODO try psi from intellij
+
+    var defaults = createDefaults();
 
     var rootElement = d3.select("#body");
-    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 80});
-    rootElement.append("label").html("Use parser");
-    var useParseCheckBox = rootElement.append("input").attr("type", "checkbox");
-    var showTreeButton = rootElement.append("button").text("Show tree").on("click", function() {
-        console.log(grammarText[0][0].value);
-        var parser = PEG.buildParser(grammarText[0][0].value);
-        var json = parser.parse(inputText[0][0].value)
-//        var json = JSON.parse(inputText[0][0].value);
-        console.log(json);
-        showTree(json);
 
-        inputText.remove();
-        showTreeButton.remove();
+    var inputText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(defaults.inputTree);
+    var useParserLabel = rootElement.append("label").html("Use parser");
+    var useParserCheckBox = rootElement.append("input").attr("type", "checkbox");
+    var showTreeButton = rootElement.append("button").text("Show");
+    var deleteAllButton = rootElement.append("button").text("Delete all");
+    var dropDown = rootElement.append("select");
+    dropDown.append("option").attr("value", "0").html("tree");
+    dropDown.append("option").attr("value", "1").html("circle tree");
+    dropDown.append("option").attr("value", "2").html("dendrogram");
+    dropDown.append("option").attr("value", "3").html("circle dendrogram");
+    dropDown.on("change", function() {
+        console.log(+this.value);
     });
-    var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text('\
-start = node\n\
-\n\
-node = nodeLParen name:name children:nextNode* nodeRParen { return children.length > 0 ? {name: name, children: children} : {name: name}; }\n\
-nextNode = separator node:node { return node; }\n\
-\n\
-name = s:[0-9a-zA-Z]+ { return s.join(""); }\n\
-nodeLParen = "Node(" ws*\n\
-nodeRParen = ws* ")"\n\
-separator = ws* "," ws*\n\
-ws = " " / "\\t" / "\\n"\n\
-    ');
+    var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(defaults.grammar);
+
+    var treeElement = rootElement.append("span");
+
+    showTreeButton.on("click", function() {
+        var parser = PEG.buildParser(grammarText[0][0].value);
+        var json = parser.parse(inputText[0][0].value);
+//        var json = JSON.parse(inputText[0][0].value);
+
+        treeElement.selectAll("*").remove();
+        showTree(json, treeElement);
+    });
+    deleteAllButton.on("click", function() {
+        [inputText, useParserLabel, useParserCheckBox, showTreeButton, deleteAllButton, grammarText, dropDown].forEach(function(it){
+            it.remove();
+        });
+    });
 
 
-    function showTree(json) {
+    function showTree(json, rootElement) {
         var m = [20, 120, 20, 120],
             w = 1280 - m[1] - m[3],
             h = 800 - m[0] - m[2],
@@ -75,7 +83,7 @@ ws = " " / "\\t" / "\\n"\n\
         var diagonal = d3.svg.diagonal()
                 .projection(function(d) { return [d.y, d.x]; });
 
-        var vis = d3.select("#body").append("svg:svg")
+        var vis = rootElement.append("svg:svg")
                 .attr("width", w + m[1] + m[3])
                 .attr("height", h + m[0] + m[2])
                 .append("svg:g")
@@ -197,6 +205,24 @@ ws = " " / "\\t" / "\\n"\n\
                 d._children = null;
             }
         }
+    }
+
+    function createDefaults() {
+        return {
+            inputTree: "Node(root, Node(node1, Node(node11),Node(node12)), Node(node2, Node(node21), Node(node22)))",
+            grammar: '\
+start = node\n\
+\n\
+node = nodeLParen name:name children:nextNode* nodeRParen { return children.length > 0 ? {name: name, children: children} : {name: name}; }\n\
+nextNode = separator node:node { return node; }\n\
+\n\
+name = s:[0-9a-zA-Z]+ { return s.join(""); }\n\
+nodeLParen = "Node(" ws*\n\
+nodeRParen = ws* ")"\n\
+separator = ws* "," ws*\n\
+ws = " " / "\\t" / "\\n"\n\
+    '
+        };
     }
 
 </script>
