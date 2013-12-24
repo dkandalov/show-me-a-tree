@@ -52,6 +52,8 @@
     treeTypeDropDown.on("change", function() {
         if (+this.value == 0) display = showTree;
         else if (+this.value == 1) display = showCircleTree;
+        else if (+this.value == 2) display = showDendrogram;
+        else if (+this.value == 3) display = showCircleDendrogram;
     });
     var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(defaults.grammar);
 
@@ -253,12 +255,97 @@
         d3.select(self.frameElement).style("height", diameter - 150 + "px");
     }
 
+    function showDendrogram(json, rootElement) {
+        var width = 960,
+            height = 1200;
+
+        var cluster = d3.layout.cluster()
+                .size([height, width - 160]);
+
+        var diagonal = d3.svg.diagonal()
+                .projection(function(d) { return [d.y, d.x]; });
+
+        var svg = rootElement.append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(40,0)");
+
+        var nodes = cluster.nodes(json),
+                links = cluster.links(nodes);
+
+        var link = svg.selectAll(".link")
+                .data(links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", diagonal);
+
+        var node = svg.selectAll(".node")
+                .data(nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+        node.append("circle")
+                .attr("r", 4.5);
+
+        node.append("text")
+                .attr("dx", function(d) { return d.children ? -8 : 8; })
+                .attr("dy", 3)
+                .style("text-anchor", function(d) { return d.children ? "end" : "start"; })
+                .text(function(d) { return d.name; });
+
+        d3.select(self.frameElement).style("height", height + "px");
+    }
+
+    function showCircleDendrogram(json, rootElement) {
+        var radius = 960 / 2;
+
+        var cluster = d3.layout.cluster()
+            .size([360, radius - 120]);
+
+        var diagonal = d3.svg.diagonal.radial()
+                .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+
+        var svg = rootElement.append("svg")
+                .attr("width", radius * 2)
+                .attr("height", radius * 2)
+                .append("g")
+                .attr("transform", "translate(" + radius + "," + radius + ")");
+
+        var root = json;
+        var nodes = cluster.nodes(root);
+
+        var link = svg.selectAll("path.link")
+                .data(cluster.links(nodes))
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", diagonal);
+
+        var node = svg.selectAll("g.node")
+                .data(nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+
+        node.append("circle")
+                .attr("r", 4.5);
+
+        node.append("text")
+                .attr("dy", ".31em")
+                .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+                .attr("transform", function(d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
+                .text(function(d) { return d.name; });
+
+        d3.select(self.frameElement).style("height", radius * 2 + "px");
+    }
+
     function createDefaults() {
         return {
             inputTree: // TODO generate tree?
                     "Node(rootValue, \n" +
                     "   Node(value1, Node(value11), Node(value12), Node(value13)), \n" +
-                    "   Node(value2, Node(value21), Node(value22)), \n" +
+                    "   Node(value2, Node(value21), Node(value22, Node(value221), Node(value222))), \n" +
                     "   Node(value3, Node(value31), Node(value32)), \n" +
                     "   Node(value4, Node(value41), Node(value42))\n" +
                     ")",
