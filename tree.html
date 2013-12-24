@@ -44,16 +44,9 @@
     var useParserCheckBox = rootElement.append("input").attr("type", "checkbox");
     var showTreeButton = rootElement.append("button").text("Show");
     var deleteAllButton = rootElement.append("button").text("Delete all");
-    var treeTypeDropDown = rootElement.append("select");
-    treeTypeDropDown.append("option").attr("value", "0").html("tree");
-    treeTypeDropDown.append("option").attr("value", "1").html("circle tree");
-    treeTypeDropDown.append("option").attr("value", "2").html("dendrogram");
-    treeTypeDropDown.append("option").attr("value", "3").html("circle dendrogram");
-    treeTypeDropDown.on("change", function() {
-        if (+this.value == 0) display = showTree;
-        else if (+this.value == 1) display = showCircleTree;
-        else if (+this.value == 2) display = showDendrogram;
-        else if (+this.value == 3) display = showCircleDendrogram;
+
+    var treeTypeDropDown = appendTreeTypeDropDownTo(rootElement, function(newDisplayFunction){
+        display = newDisplayFunction;
     });
     var grammarText = rootElement.append("textarea").attr({rows: 10, cols: 80}).text(defaults.grammar);
 
@@ -74,6 +67,20 @@
         });
     });
 
+    function appendTreeTypeDropDownTo(element, callback) {
+        var treeTypeDropDown = element.append("select");
+        treeTypeDropDown.append("option").attr("value", "0").html("tree");
+        treeTypeDropDown.append("option").attr("value", "1").html("circle tree");
+        treeTypeDropDown.append("option").attr("value", "2").html("dendrogram");
+        treeTypeDropDown.append("option").attr("value", "3").html("circle dendrogram");
+        treeTypeDropDown.on("change", function() {
+            if (+this.value == 0) callback(showTree);
+            else if (+this.value == 1) callback(showCircleTree);
+            else if (+this.value == 2) callback(showDendrogram);
+            else if (+this.value == 3) callback(showCircleDendrogram);
+        });
+        return treeTypeDropDown;
+    }
 
     function showTree(json, rootElement) {
         var m = [20, 120, 20, 120],
