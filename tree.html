@@ -86,9 +86,7 @@
         var m = [20, 120, 20, 120],
             w = 1280 - m[1] - m[3],
             h = 800 - m[0] - m[2],
-            i = 0,
-            root;
-
+            i = 0;
         var tree = d3.layout.tree()
                 .size([h, w]);
 
@@ -101,9 +99,8 @@
                 .append("svg:g")
                 .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-        root = json;
-        root.x0 = h / 2;
-        root.y0 = 0;
+        json.x0 = h / 2;
+        json.y0 = 0;
 
         function toggleAll(d) {
             if (d.children) {
@@ -113,15 +110,15 @@
         }
 
         // Initialize the display to show a few nodes.
-        root.children.forEach(toggleAll);
+        json.children.forEach(toggleAll);
 
-        update(root);
+        update(json);
 
         function update(source) {
             var duration = d3.event && d3.event.altKey ? 5000 : 500;
 
             // Compute the new tree layout.
-            var nodes = tree.nodes(root).reverse();
+            var nodes = tree.nodes(json).reverse();
 
             // Normalize for fixed-depth.
             nodes.forEach(function(d) { d.y = d.depth * 180; });
@@ -349,14 +346,31 @@
 
     function createDefaults() {
         return {
-            inputTree: // TODO generate tree?
+            // TODO generate sample tree?
+            inputTree:
+                    "(a (f g) c (b d e))",
+            inputTree2:
                     "Node(rootValue, \n" +
-                    "   Node(value1, Node(value11), Node(value12), Node(value13)), \n" +
-                    "   Node(value2, Node(value21), Node(value22, Node(value221), Node(value222))), \n" +
-                    "   Node(value3, Node(value31), Node(value32)), \n" +
-                    "   Node(value4, Node(value41), Node(value42))\n" +
-                    ")",
+                            "   Node(value1, Node(value11), Node(value12), Node(value13)), \n" +
+                            "   Node(value2, Node(value21), Node(value22, Node(value221), Node(value222))), \n" +
+                            "   Node(value3, Node(value31), Node(value32)), \n" +
+                            "   Node(value4, Node(value41), Node(value42))\n" +
+                            ")",
             grammar: '\
+start = node\n\
+\n\
+node = singleNode / nodeWithChildren\n\
+singleNode = name:name { return {name: name}; }\n\
+nodeWithChildren = nodeLParen name:name children:nextNode* nodeRParen { return children.length > 0 ? {name: name, children: children} : {name: name}; }\n\
+nextNode = separator node:node { return node; }\n\
+\n\
+name = s:[0-9a-zA-Z]+ { return s.join(""); }\n\
+nodeLParen = "(" ws*\n\
+nodeRParen = ws* ")"\n\
+separator = ws* \n\
+ws = " " / "\\t" / "\\n"\n\
+    ',
+            grammar2: '\
 start = node\n\
 \n\
 node = nodeLParen name:name children:nextNode* nodeRParen { return children.length > 0 ? {name: name, children: children} : {name: name}; }\n\
